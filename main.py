@@ -47,7 +47,7 @@ def simulacion(sentido,fecha_inicio,fecha_fin):
     while delta < fecha_fin:
         [tiempo_trafico,autos]= sim_trafico(delta,sentido)
         delta += timedelta(minutes=tiempo_trafico + 1)
-        # print(delta)
+        print(tiempo_trafico)
         tiempo_consumido += tiempo_trafico
         cantidad_autos += autos
     return [tiempo_consumido,cantidad_autos]
@@ -75,7 +75,8 @@ def autos_via(t_actual: datetime, vehiculos: list, flujo_vehicular):
 def sim_trafico(t_actual: datetime,sentido):
     dia = "Lunes-Viernes" if t_actual.weekday() < 5 else "Sabado-Domingo"
     info = DATA[sentido][dia]
-    demora = info["demora"]
+    # demora = info["demora"]
+    demora = 0
     flujo_vehicular = TOPE_FLUJO_VEHICULAR
     if random.random() < 0.01:
         [intr,duracion_intr]= interrupcion(sentido)

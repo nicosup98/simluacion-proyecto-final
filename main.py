@@ -101,7 +101,8 @@ def sim_trafico(t_actual: datetime, sentido):
         flujo_vehicular = TOPE_FLUJO_VEHICULAR_REPARACION
 
     autos = autos_via(t_actual, info["vehiculos"], flujo_vehicular)
-    demora += 60 * (autos/flujo_vehicular)
+    if autos/flujo_vehicular >= 0.3:
+        demora += 60 * (autos/flujo_vehicular)
 
     return [random.randint(round(demora * 0.95), round(demora * 1.05)), autos]
 

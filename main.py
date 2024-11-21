@@ -9,12 +9,14 @@ DATA = {
     "Norte-Sur": {
         "Lunes-Viernes": {"vehiculos": [["06:00", "09:00", 119], ["11:30", "13:00", 105], ["13:00", "19:30", 120]], "demora": 18},
         "Sabado-Domingo": {"vehiculos": [["13:00", "15:00", 107], ["06:00", "20:00", 80]], "demora": 8},
-        "mantenimiento": 350
+        "mantenimiento": 350,
+        "vias": 3
     },
     "Sur-Norte": {
         "Lunes-Viernes": {"vehiculos": [["06:00", "09:00", 117], ["11:30", "13:00", 98], ["17:00", "21:15", 76]], "demora": 6},
         "Sabado-Domingo": {"vehiculos": [["07:00", "09:00", 105], ["04:30", "22:00", 54]], "demora": 0},
-        "mantenimiento": 197
+        "mantenimiento": 197,
+        "vias": 3
     }
 }
 
@@ -57,8 +59,12 @@ def simulacion(sentido, fecha_inicio, fecha_fin):
     delta = fecha_inicio
     tiempo_consumido = 0
     cantidad_autos = 0
+    habilitar_via = False
     while delta < fecha_fin:
-        [tiempo_trafico, autos] = sim_trafico(delta, sentido)
+        [tiempo_trafico, autos,disponibilidad,tope_flujo_vehicular] = sim_trafico(delta, sentido)
+        if disponibilidad <= 0.77 or autos/tope_flujo_vehicular >=0.9:
+            tiempo_trafico += 120
+
         delta += timedelta(minutes=tiempo_trafico + 1)
         tiempo_consumido += tiempo_trafico
         cantidad_autos += autos
@@ -87,24 +93,31 @@ def autos_via(t_actual: datetime, vehiculos: list, flujo_vehicular):
     return cantidad_vehiculos
 
 
-def sim_trafico(t_actual: datetime, sentido):
+def sim_trafico(t_actual: datetime, sentido, ):
     dia = "Lunes-Viernes" if t_actual.weekday() < 5 else "Sabado-Domingo"
     info = DATA[sentido][dia]
-    # demora = info["demora"]
     demora = 0
-    flujo_vehicular = TOPE_FLUJO_VEHICULAR
-    if random.random() < 0.0005:
+    disponibilidad = 1
+    ocurrio_intr = False
+    if random.random() < 0.0000005:
+        ocurrio_intr = True
         [intr, duracion_intr] = interrupcion(sentido)
-        print(f"ocurrio una interrupcion en el sentido {
-              sentido}, causa: {intr}, demora: {duracion_intr}")
+        print(f"ocurrio una interrupcion en el sentido {sentido}, causa: {intr}, demora: {duracion_intr} minutos")
         demora += duracion_intr
-        flujo_vehicular = TOPE_FLUJO_VEHICULAR_REPARACION
+        disponibilidad -= 0.33
 
+    # if habilitar_via :
+    #     disponibilidad += 0.33
+    #     demora += 120
+
+    flujo_vehicular = round(TOPE_FLUJO_VEHICULAR * disponibilidad)
     autos = autos_via(t_actual, info["vehiculos"], flujo_vehicular)
-    if autos/flujo_vehicular >= 0.3:
+    if autos/flujo_vehicular >= 0.1:
         demora += 60 * (autos/flujo_vehicular)
 
-    return [random.randint(round(demora * 0.95), round(demora * 1.05)), autos]
+    
+
+    return [random.randint(round(demora * 0.95), round(demora * 1.05)), autos, disponibilidad,flujo_vehicular]
 
 
 def interrupcion(sentido):
